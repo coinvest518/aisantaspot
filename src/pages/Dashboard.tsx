@@ -21,7 +21,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const referralLink = "ref.referralpro.com/user123"; // This should be dynamic based on user's referral code
 
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['userStats'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -44,7 +44,7 @@ const Dashboard = () => {
         async (payload) => {
           console.log('Realtime update received:', payload);
           // Refetch stats when earnings change
-          await stats?.refetch();
+          await refetch();
         }
       )
       .subscribe();
@@ -52,7 +52,7 @@ const Dashboard = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [refetch]);
 
   const copyLink = () => {
     navigator.clipboard.writeText(referralLink);
