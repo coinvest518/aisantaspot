@@ -5,9 +5,16 @@ import {
   Facebook,
   Twitter,
   Instagram,
+  
+  MessageCircle,
   Users,
   BarChart,
 } from "lucide-react";
+
+import { CIcon } from '@coreui/icons-react';
+import { cibTiktok } from '@coreui/icons';
+
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -114,6 +121,22 @@ const Dashboard = () => {
                   <Instagram className="w-4 h-4 mr-2" />
                   Share on Instagram
                 </Button>
+                <Button
+className="bg-gray-800/10 hover:bg-gray-800/20 text-gray-800"
+                  onClick={() => window.open("https://tiktok.com", "_blank")}
+                >
+                   <CIcon icon={cibTiktok} size="xl" /> 
+                  Share on TikTok
+                </Button>
+                <Button
+                  className="bg-[#FFFC00] text-black hover:bg-[#FFFC00]/90"
+                  onClick={() => window.open("https://snapchat.com", "_blank")}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Share on Snapchat
+                </Button>
+                
+
               </div>
             </Card>
           </main>
