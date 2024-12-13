@@ -48,12 +48,6 @@ const Landing = () => {
     <div className="min-h-screen bg-gradient-to-b from-red-50 to-white">
       {/* Navigation */}
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-<<<<<<< HEAD
-        <div className="text-2xl font-bold text-primary">Santas Pot</div>
-        <Button onClick={() => setIsLogin(!isLogin)} variant="outline">
-          {isLogin ? "Need an account?" : "Already have an account?"}
-        </Button>
-=======
         <div className="flex items-center space-x-2">
           <Gift className="w-8 h-8 text-red-500" />
           <div className="text-2xl font-bold text-primary">
@@ -66,7 +60,6 @@ const Landing = () => {
             {isLogin ? "Need an account?" : "Already have an account?"}
           </Button>
         </div>
->>>>>>> 2d7e1d859fa40b80ba115180cbcaa68849437db7
       </nav>
 
       {/* Hero Section */}
