@@ -59,6 +59,13 @@ export const fetchUserStats = async (userId: string): Promise<DashboardStats> =>
     throw offersError;
   }
 
+  console.log('Stats fetched successfully:', {
+    earnings: totalEarnings,
+    clicks: clickCount,
+    referrals: referralCount,
+    offers: offersCount
+  });
+
   return {
     earnings: totalEarnings,
     clicks: clickCount || 0,
@@ -96,13 +103,16 @@ export const trackClick = async (referralCode: string, userId: string, ipAddress
     .insert({
       user_id: userId,
       referral_code: referralCode,
-      ip_address: ipAddress
+      ip_address: ipAddress,
+      created_at: new Date().toISOString()
     });
 
   if (clickError) {
     console.error('Error recording click:', clickError);
     throw clickError;
   }
+
+  console.log('Click recorded successfully');
 
   // Add earnings for the click
   const { error: earningError } = await supabase
@@ -111,7 +121,8 @@ export const trackClick = async (referralCode: string, userId: string, ipAddress
       user_id: userId,
       amount: 2.00, // $2 per click
       type: 'click',
-      status: 'pending'
+      status: 'pending',
+      created_at: new Date().toISOString()
     });
 
   if (earningError) {
@@ -119,10 +130,40 @@ export const trackClick = async (referralCode: string, userId: string, ipAddress
     throw earningError;
   }
 
+  console.log('Earnings recorded for click');
+
+  // Update live stats
+  await updateLiveStats();
+  console.log('Live stats updated after click');
+
+  return true;
+};
+
+export const trackShare = async (userId: string, platform: string) => {
+  console.log('Tracking share:', { userId, platform });
+  
+  // Record the share
+  const { error: shareError } = await supabase
+    .from('shares')
+    .insert({
+      user_id: userId,
+      platform,
+      created_at: new Date().toISOString()
+    });
+
+  if (shareError) {
+    console.error('Error recording share:', shareError);
+    throw shareError;
+  }
+
+  console.log('Share recorded successfully');
   return true;
 };
 
 export const updateLiveStats = async () => {
+  console.log('Updating live stats');
+  
+  // Get current totals
   const { data: stats, error: statsError } = await supabase
     .from('live_stats')
     .select('*')
@@ -133,5 +174,6 @@ export const updateLiveStats = async () => {
     throw statsError;
   }
 
+  console.log('Live stats updated successfully:', stats);
   return stats;
 };

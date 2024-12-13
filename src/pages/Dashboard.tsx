@@ -5,7 +5,6 @@ import {
   Facebook,
   Twitter,
   Instagram,
-  
   MessageCircle,
   Users,
   BarChart,
@@ -14,12 +13,12 @@ import {
 import { CIcon } from '@coreui/icons-react';
 import { cibTiktok } from '@coreui/icons';
 
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { UserButton } from "@/components/UserButton";
+import { trackShare } from "@/lib/stats";
 
 const Dashboard = () => {
   const [earnings] = useState(108);
@@ -35,6 +34,59 @@ const Dashboard = () => {
       title: "Link copied!",
       description: "Your referral link has been copied to clipboard.",
     });
+  };
+
+  const handleShare = async (platform: string) => {
+    try {
+      // Track the share
+      await trackShare("user123", platform); // Replace with actual userId
+
+      // Open share dialog
+      let shareUrl = "";
+      switch (platform) {
+        case "facebook":
+          shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`;
+          break;
+        case "twitter":
+          shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(referralLink)}`;
+          break;
+        case "instagram":
+          // Instagram doesn't have a direct share URL, so we'll just copy the link
+          await navigator.clipboard.writeText(referralLink);
+          toast({
+            title: "Link copied!",
+            description: "Share this link on Instagram.",
+          });
+          return;
+        case "tiktok":
+          // TikTok doesn't have a direct share URL, so we'll just copy the link
+          await navigator.clipboard.writeText(referralLink);
+          toast({
+            title: "Link copied!",
+            description: "Share this link on TikTok.",
+          });
+          return;
+        case "snapchat":
+          shareUrl = `https://www.snapchat.com/share?url=${encodeURIComponent(referralLink)}`;
+          break;
+      }
+
+      if (shareUrl) {
+        window.open(shareUrl, "_blank");
+      }
+
+      toast({
+        title: "Share tracked!",
+        description: `Your share on ${platform} has been recorded.`,
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast({
+        title: "Error",
+        description: "Failed to share. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -102,41 +154,39 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Button
                   className="bg-[#1877F2] hover:bg-[#1877F2]/90"
-                  onClick={() => window.open("https://facebook.com", "_blank")}
+                  onClick={() => handleShare("facebook")}
                 >
                   <Facebook className="w-4 h-4 mr-2" />
                   Share on Facebook
                 </Button>
                 <Button
                   className="bg-[#1DA1F2] hover:bg-[#1DA1F2]/90"
-                  onClick={() => window.open("https://twitter.com", "_blank")}
+                  onClick={() => handleShare("twitter")}
                 >
                   <Twitter className="w-4 h-4 mr-2" />
                   Share on Twitter
                 </Button>
                 <Button
                   className="bg-[#E4405F] hover:bg-[#E4405F]/90"
-                  onClick={() => window.open("https://instagram.com", "_blank")}
+                  onClick={() => handleShare("instagram")}
                 >
                   <Instagram className="w-4 h-4 mr-2" />
                   Share on Instagram
                 </Button>
                 <Button
-className="bg-gray-800/10 hover:bg-gray-800/20 text-gray-800"
-                  onClick={() => window.open("https://tiktok.com", "_blank")}
+                  className="bg-gray-800/10 hover:bg-gray-800/20 text-gray-800"
+                  onClick={() => handleShare("tiktok")}
                 >
-                   <CIcon icon={cibTiktok} size="xl" /> 
+                  <CIcon icon={cibTiktok} size="xl" />
                   Share on TikTok
                 </Button>
                 <Button
                   className="bg-[#FFFC00] text-black hover:bg-[#FFFC00]/90"
-                  onClick={() => window.open("https://snapchat.com", "_blank")}
+                  onClick={() => handleShare("snapchat")}
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Share on Snapchat
                 </Button>
-                
-
               </div>
             </Card>
           </main>
