@@ -28,7 +28,7 @@ const Landing = () => {
         await signUp(email, password);
         toast({
           title: "Account created!",
-          description: "Welcome to ReferralPro.",
+          description: "Welcome to Santas Pot.",
         });
       }
       navigate("/dashboard");
@@ -45,7 +45,7 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-        <div className="text-2xl font-bold text-primary">ReferralPro</div>
+        <div className="text-2xl font-bold text-primary">Santas Pot</div>
         <Button onClick={() => setIsLogin(!isLogin)} variant="outline">
           {isLogin ? "Need an account?" : "Already have an account?"}
         </Button>
