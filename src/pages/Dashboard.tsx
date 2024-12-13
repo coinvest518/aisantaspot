@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { UserButton } from "@/components/UserButton";
 
 const Dashboard = () => {
   const [earnings] = useState(108);
@@ -28,9 +31,15 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-gray-50">
+        <AppSidebar />
+        <div className="flex-1">
+          <header className="flex justify-end p-4 bg-white border-b">
+            <UserButton />
+          </header>
+          <main className="container mx-auto px-6 py-8">
+            <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
         <Card className="bg-primary text-white p-6 mb-8">
           <div className="flex justify-between items-center">
@@ -107,8 +116,10 @@ const Dashboard = () => {
             </Button>
           </div>
         </Card>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
