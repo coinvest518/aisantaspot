@@ -1,46 +1,184 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ArrowRight, Gift, Users, DollarSign, CreditCard } from "lucide-react";
-import { useState } from "react";
+import { Gift, Users, DollarSign, CreditCard } from "lucide-react";
+import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import { signIn, signUp } from "@/lib/auth";
-import { useToast } from "@/components/ui/use-toast";
+import { useUser } from '../lib/useUser';
 import LiveCounter from "@/components/LiveCounter";
 import Testimonials from "@/components/Testimonials";
+import AuthForm from "@/components/authForm";
+import { toast } from "sonner";
+import { createClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing Supabase environment variables!');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  }
+});
+
+// Function to process referral rewards
+const processReferralReward = async (referralCode: string, newUserId: string) => {
+  try {
+    // Find referrer by their referral code
+    const { data: referrer, error: referrerError } = await supabase
+      .from('profiles')
+      .select('id, earnings')
+      .eq('referral_code', referralCode)
+      .single();
+
+    if (referrerError) throw referrerError;
+
+    if (referrer) {
+      // Update referrer's earnings
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          earnings: (referrer.earnings || 0) + 50,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', referrer.id);
+
+      if (updateError) throw updateError;
+
+      // Create referral record
+      const { error: referralError } = await supabase
+        .from('referrals')
+        .insert([{
+          referrer_id: referrer.id,
+          referred_id: newUserId,
+          referral_code_used: referralCode,
+          status: 'completed',
+          reward_amount: 50,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (referralError) throw referralError;
+
+      return true;
+    }
+  } catch (error) {
+    console.error('Error processing referral:', error);
+    throw error;
+  }
+};
 
 const Landing = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { login: loginUser } = useUser();
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [referralCode, setReferralCode] = useState("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [referralCode, setReferralCode] = useState<string>("");
+
+  // Extract referral code from URL if present
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('referral');
+    if (code) {
+      setReferralCode(code);
+    }
+  }, []);
+
+  const signUp = async (email: string, password: string, referralCode?: string) => {
+    try {
+      // 1. Create auth user
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/complete-profile`,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // 2. Generate unique referral code for new user
+        const newReferralCode = uuidv4().slice(0, 8);
+
+        // 3. Create user profile with referral code
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: data.user.id,
+            username: null,
+            referral_code: newReferralCode,
+            earnings: 100, // Initial bonus
+            created_at: new Date().toISOString()
+          }]);
+
+        if (profileError) throw profileError;
+
+        // 4. Process referral reward if referral code was used
+        if (referralCode) {
+          await processReferralReward(referralCode, data.user.id);
+        }
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+    return data.user;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     try {
       if (isLogin) {
-        await signIn(email, password);
-        toast({
-          title: "Welcome back!",
-          description: "You've successfully logged in.",
-        });
+        const userData = await signIn(email, password);
+        if (userData) {
+          loginUser({ id: userData.id, username: userData.user_metadata?.username });
+          toast("Welcome Back! 👋", {
+            description: `Successfully logged in as ${email}`,
+            duration: 4000,
+          });
+          navigate("/dashboard");
+        }
       } else {
-        await signUp(email, password);
-        toast({
-          title: "Account created!",
-          description: "Welcome to Santas Pot.",
+        // Include referral code during signup if present
+        await signUp(email, password, referralCode);
+        toast("Check Your Email! 📧", {
+          description: "We've sent you a verification link. Please verify your email before logging in.",
+          duration: 6000,
         });
+        setEmail("");
+        setPassword("");
+        setIsLogin(true);
       }
-      navigate("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Auth error:", error);
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
+      toast("Error", {
+        description: error?.message || "Something went wrong. Please try again.",
+        duration: 4000,
+        style: { backgroundColor: 'red', color: 'white' },
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -61,7 +199,6 @@ const Landing = () => {
           </Button>
         </div>
       </nav>
-
       {/* Hero Section */}
       <main className="container mx-auto px-6 py-12">
         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -72,11 +209,9 @@ const Landing = () => {
             </h1>
             <p className="text-xl text-gray-600 mb-8">
               Share your unique referral link, earn $2 per click and $50 for every
-              successful signup. Start earning passive income today!
+              successful new signup. $200 for new users. Start earning passive income today!
             </p>
-            
             <LiveCounter />
-
             <div className="grid md:grid-cols-3 gap-6 mt-12">
               <Card className="bg-white/80 backdrop-blur">
                 <CardContent className="pt-6">
@@ -101,66 +236,29 @@ const Landing = () => {
               </Card>
             </div>
           </div>
-
           <Card className="w-full max-w-md mx-auto bg-white/90 backdrop-blur">
-            <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium">
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium">
-                    Password
-                  </label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                {!isLogin && (
-                  <div className="space-y-2">
-                    <label htmlFor="referral" className="text-sm font-medium">
-                      Referral Code (Optional)
-                    </label>
-                    <Input
-                      id="referral"
-                      type="text"
-                      value={referralCode}
-                      onChange={(e) => setReferralCode(e.target.value)}
-                    />
-                  </div>
-                )}
-                <Button type="submit" className="w-full">
-                  {isLogin ? "Sign In" : "Create Account"}
-                  <ArrowRight className="ml-2" />
-                </Button>
-              </form>
-            </CardContent>
+            <AuthForm
+              isLogin={isLogin}
+              email={email}
+              setEmail={setEmail}
+              password={password}
+         
+              setPassword={setPassword}
+           
+              onSubmit={handleSubmit}
+            />
           </Card>
         </div>
       </main>
-
       {/* About Section */}
       <section className="py-16 bg-white/80">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-8">About Us</h2>
           <div className="max-w-3xl mx-auto text-center">
             <p className="text-lg text-gray-600 mb-6">
-              We're a global community of entrepreneurs and referral marketers,
-              helping each other succeed. Our platform makes it easy to earn money
-              by sharing products and services you love.
+              Santa's Pot is more than just a community of hope, connection,
+              and mutual support. We believe that everyone deserves a chance, and together,
+              we can create unexpected moments of joy and relief.
             </p>
             <div className="grid md:grid-cols-3 gap-8 mt-12">
               <div className="text-center">
@@ -179,7 +277,6 @@ const Landing = () => {
           </div>
         </div>
       </section>
-
       {/* Payment Methods */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-6">
@@ -200,10 +297,8 @@ const Landing = () => {
           </div>
         </div>
       </section>
-
       {/* Testimonials Section */}
       <Testimonials />
-
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-6">
@@ -217,23 +312,23 @@ const Landing = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>Home</li>
-                <li>About</li>
-                <li>Contact</li>
-                <li>Terms of Service</li>
+                <li><a href="/" target="_blank">Home</a></li>
+                <li><a href="https://buymeacoffee.com/coinvest/e/344832" target="_blank">Want an APP Made Like this?</a></li>
+                <li><a href="https://t.me/omniai_ai" target="_blank">Contact</a></li>
+                <li><a href="https://www.publish0x.com/omniai/santas-pot-whitepapaer-and-faq-xoqewmq" target="_blank">How It Works</a></li>
               </ul>
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
               <p className="text-gray-400">
-                Email: support@referralpro.com
+                Telegram: https://t.me/omniai_ai
                 <br />
                 Available 24/7
               </p>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
-            <p>&copy; 2024 ReferralPro. All rights reserved.</p>
+            <p>&copy; 2024 Referrer.IO All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -8,6 +8,18 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      },
+      '/stripe': {
+        target: 'https://api.stripe.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/stripe/, '')
+      }
+    }
   },
   plugins: [
     react(),

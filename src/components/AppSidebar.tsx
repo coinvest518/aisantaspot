@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import {
   Sidebar,
   SidebarContent,
@@ -9,7 +10,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { 
-  LayoutDashboard, 
   Users, 
   Gift, 
   UserCircle, 
@@ -19,13 +19,8 @@ import {
 
 const items = [
   {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
     title: "Referrals",
-    url: "#",
+    to: "/referrals",  // Changed from url to to
     icon: Users,
   },
 ]
@@ -33,25 +28,25 @@ const items = [
 const appsItems = [
   {
     title: "Offers",
-    url: "#",
+    to: "/offers",
     icon: Gift,
   },
 ]
 
 const accountItems = [
   {
-    title: "My Account",
-    url: "#",
+    title: "Dashboard",
+    to: "/dashboard",
     icon: UserCircle,
   },
   {
-    title: "Payments / Invoices",
-    url: "#",
+    title: "Entry Prize Pot Donation ",
+    to: "/payments",
     icon: Receipt,
   },
   {
     title: "Withdraw",
-    url: "#",
+    to: "/withdraw",
     icon: PiggyBank,
   },
 ]
@@ -66,10 +61,10 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url} className="text-gray-400 hover:text-white">
+                    <Link to={item.to} className="text-gray-400 hover:text-white">
                       <item.icon className="w-4 h-4" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -84,10 +79,10 @@ export function AppSidebar() {
               {appsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url} className="text-gray-400 hover:text-white">
+                    <Link to={item.to} className="text-gray-400 hover:text-white">
                       <item.icon className="w-4 h-4" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -102,10 +97,10 @@ export function AppSidebar() {
               {accountItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url} className="text-gray-400 hover:text-white">
+                    <Link to={item.to} className="text-gray-400 hover:text-white">
                       <item.icon className="w-4 h-4" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
