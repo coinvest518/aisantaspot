@@ -139,7 +139,7 @@ const LiveCounter: React.FC = () => {
             <span className="ml-4">Local Increment: ${localCounter}</span>
           </div>
           <div className="mt-4 text-sm text-white opacity-75">
-            Next $1 increment in {timeLeft} seconds
+            Next $1 donation increment in {timeLeft} seconds
           </div>
           <div className="w-full bg-white/30 rounded-full h-2 mt-2">
             <div 

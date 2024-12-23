@@ -1,9 +1,9 @@
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Copy, Facebook, Twitter, Instagram, MessageCircle, Users, BarChart } from "lucide-react";
 import { CIcon } from '@coreui/icons-react';
 import { cibTiktok } from '@coreui/icons';
-import  React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -33,7 +33,7 @@ const Dashboard = () => {
     earnings: 0,
     clicks: 0,
     referrals: 0,
-    offers: 0,
+    completed_offers: 0, // Update field name to match the database
     referralLink: "",
     username: ""
   });
@@ -49,20 +49,20 @@ const Dashboard = () => {
           profileResult,
           clickResult,
           referralResult,
-          offerResult,
+          userStatsResult,
           potResult
         ] = await Promise.all([
           supabase.from("profiles").select("*").eq("id", user.id).single(),
           supabase.from("clicks").select("*", { count: "exact" }).eq("user_id", user.id),
           supabase.from("referrals").select("*", { count: "exact" }).eq("referrer_id", user.id),
-          supabase.from("offers").select("*", { count: "exact" }).eq("user_id", user.id),
+          supabase.from("user_stats").select("*").eq("user_id", user.id).single(), // Fetch from user_stats
           supabase.from("pot").select("*").eq("is_current", true).single<PotData>()
         ]);
 
         const { data: profile, error: profileError } = profileResult;
         const { count: clickCount } = clickResult;
         const { count: referralCount } = referralResult;
-        const { count: offerCount } = offerResult;
+        const { data: userStats, error: userStatsError } = userStatsResult;
         const { data: potData, error: potError } = potResult;
 
         if (profileError || !profile) {
@@ -76,10 +76,10 @@ const Dashboard = () => {
         }
 
         setDashboardData({
-          earnings: profile.earnings || 0,
+          earnings: userStats.total_earned || 0,
           clicks: clickCount || 0,
           referrals: referralCount || 0,
-          offers: offerCount || 0,
+          completed_offers: userStats.completed_offers || 0, // Use the correct field from user_stats
           referralLink: `ref.santaspot.xyz/${profile.referral_code}`,
           username: profile.username
         });
@@ -97,26 +97,28 @@ const Dashboard = () => {
     };
 
     loadDashboard();
-  // Set up realtime subscription
-  const potChannel = supabase.channel('pot_changes');
+
+    // Set up realtime subscription
+    const potChannel = supabase.channel('pot_changes');
     
-  potChannel
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'pot',
-        filter: 'is_current=eq.true'
-      },
-      (payload) => {
-        const typedPayload = payload as unknown as RealtimePayload;
-        if (typedPayload.new && typeof typedPayload.new.total_amount === 'number') {
-          setPotTotal(typedPayload.new.total_amount);
+    potChannel
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pot',
+          filter: 'is_current=eq.true'
+        },
+        (payload) => {
+          const typedPayload = payload as unknown as RealtimePayload;
+          if (typedPayload.new && typeof typedPayload.new.total_amount === 'number') {
+            setPotTotal(typedPayload.new.total_amount);
+          }
         }
-      }
-    )
-    .subscribe();
+      )
+      .subscribe();
+
     return () => {
       potChannel.unsubscribe();
     };
@@ -136,24 +138,24 @@ const Dashboard = () => {
 
   return (
     <SidebarProvider>
-    <div className="flex min-h-screen w-full bg-gray-50">
-      <AppSidebar />
-      <div className="flex-1">
-        <header className="flex justify-between items-center p-4 bg-white border-b">
-          {/* Add pot total display */}
-          <div className="flex items-center space-x-4">
-            <Card className="bg-gradient-to-r from-green-400 to-blue-500 text-white">
-              <div className="px-6 py-4">
-                <div className="text-sm font-semibold opacity-90">Current Pot Total</div>
-                <div className="text-2xl font-bold">${potTotal.toFixed(2)}</div>
-              </div>
-            </Card>
-          </div>
+      <div className="flex min-h-screen w-full bg-gray-50">
+        <AppSidebar />
+        <div className="flex-1">
+          <header className="flex justify-between items-center p-4 bg-white border-b">
+            {/* Add pot total display */}
+            <div className="flex items-center space-x-4">
+              <Card className="bg-gradient-to-r from-green-400 to-blue-500 text-white">
+                <div className="px-6 py-4">
+                  <div className="text-sm font-semibold opacity-90">Current Pot Total</div>
+                  <div className="text-2xl font-bold">${potTotal.toFixed(2)}</div>
+                </div>
+              </Card>
+            </div>
 
-          <Button>
-            {dashboardData.username ? `Welcome, ${dashboardData.username}!` : "Welcome!"}
-          </Button>
-        </header>
+            <Button>
+              {dashboardData.username ? `Welcome, ${dashboardData.username}!` : "Welcome!"}
+            </Button>
+          </header>
           
           <main className="container mx-auto px-6 py-8">
             <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
@@ -200,7 +202,7 @@ const Dashboard = () => {
                   <BarChart className="w-6 h-6 text-primary mr-2" />
                   <h3 className="text-lg font-semibold">Offers</h3>
                 </div>
-                <p className="text-3xl font-bold">{dashboardData.offers}</p>
+                <p className="text-3xl font-bold">{dashboardData.completed_offers}</p> {/* Use completed_offers */}
               </Card>
             </div>
 
@@ -264,13 +266,9 @@ const Dashboard = () => {
                 </Button>
               </div>
             </Card>
-
-           
           </main>
         </div>
       </div>
-
-      
     </SidebarProvider>
   );
 };
