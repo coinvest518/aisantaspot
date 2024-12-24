@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from '../lib/useUser';
@@ -6,6 +6,7 @@ import { AppSidebar } from '../components/AppSidebar';
 import { Button } from '@/components/ui/button';
 import { PaymentStatus } from '../components/PaymentStatus';
 import { usePaymentProcessing } from '../hooks/usePaymentProcessing';
+import { Loader2 } from 'lucide-react';
 
 const PaymentCompletion: React.FC = () => {
     const { user } = useUser();
@@ -15,11 +16,25 @@ const PaymentCompletion: React.FC = () => {
     const paymentIntent = searchParams.get('payment_intent');
     const redirectStatus = searchParams.get('redirect_status');
     
-    const { status, error, paymentAmount } = usePaymentProcessing(
-      paymentIntent,
-      redirectStatus,
-      user?.id ?? null
+    useEffect(() => {
+        if (!paymentIntent || !redirectStatus) {
+            navigate('/payments');
+        }
+    }, [paymentIntent, redirectStatus, navigate]);
+
+    const { status, error, paymentAmount, isLoading } = usePaymentProcessing(
+        paymentIntent,
+        redirectStatus,
+        user?.id ?? null
     );
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="animate-spin h-8 w-8" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex">
@@ -31,9 +46,9 @@ const PaymentCompletion: React.FC = () => {
                     </CardHeader>
                     <CardContent>
                         <PaymentStatus 
-                          status={status}
-                          error={error}
-                          paymentAmount={paymentAmount}
+                            status={status}
+                            error={error}
+                            paymentAmount={paymentAmount}
                         />
                     </CardContent>
                     <CardFooter>
