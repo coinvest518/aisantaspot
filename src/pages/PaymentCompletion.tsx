@@ -14,7 +14,7 @@ const PaymentCompletion: React.FC = () => {
 
     const paymentIntent = searchParams.get('payment_intent');
     const redirectStatus = searchParams.get('redirect_status');
-    
+
     useEffect(() => {
         if (!paymentIntent || !redirectStatus) {
             navigate('/payments');
@@ -27,6 +27,11 @@ const PaymentCompletion: React.FC = () => {
         user?.id ?? null
     );
 
+    useEffect(() => {
+        if (status === 'success') {
+            navigate("/dashboard");
+        }
+    }, [status, navigate]);
 
     if (isLoading) {
         return (

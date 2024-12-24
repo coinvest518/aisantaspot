@@ -5,8 +5,6 @@ import { Copy, Facebook, Twitter, Instagram, MessageCircle, Users, BarChart } fr
 import { CIcon } from '@coreui/icons-react';
 import { cibTiktok } from '@coreui/icons';
 import { useToast } from "@/hooks/use-toast";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
 import { supabase } from "@/lib/supabase";
 import { useUser } from '../lib/useUser';
 import { useNavigate } from "react-router-dom";
@@ -33,7 +31,7 @@ const Dashboard = () => {
     earnings: 0,
     clicks: 0,
     referrals: 0,
-    completed_offers: 0, // Update field name to match the database
+    completed_offers: 0,
     referralLink: "",
     username: ""
   });
@@ -44,7 +42,6 @@ const Dashboard = () => {
       if (!user) return;
 
       try {
-        // Fetch all dashboard data in parallel with proper destructuring names
         const [
           profileResult,
           clickResult,
@@ -55,7 +52,7 @@ const Dashboard = () => {
           supabase.from("profiles").select("*").eq("id", user.id).single(),
           supabase.from("clicks").select("*", { count: "exact" }).eq("user_id", user.id),
           supabase.from("referrals").select("*", { count: "exact" }).eq("referrer_id", user.id),
-          supabase.from("user_stats").select("*").eq("user_id", user.id).single(), // Fetch from user_stats
+          supabase.from("user_stats").select("*").eq("user_id", user.id).single(),
           supabase.from("pot").select("*").eq("is_current", true).single<PotData>()
         ]);
 
@@ -70,7 +67,6 @@ const Dashboard = () => {
           return;
         }
 
-        // Set pot total
         if (!potError && potData) {
           setPotTotal(potData.total_amount || 0);
         }
@@ -79,7 +75,7 @@ const Dashboard = () => {
           earnings: userStats.total_earned || 0,
           clicks: clickCount || 0,
           referrals: referralCount || 0,
-          completed_offers: userStats.completed_offers || 0, // Use the correct field from user_stats
+          completed_offers: userStats.completed_offers || 0,
           referralLink: `ref.santaspot.xyz/${profile.referral_code}`,
           username: profile.username
         });
@@ -131,6 +127,7 @@ const Dashboard = () => {
       description: "Your referral link has been copied to clipboard.",
     });
   };
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
