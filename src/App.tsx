@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Referrals from './pages/Referrals';
-import PaymentCompletion from './pages/PaymentCompletions';
+import PaymentCompletion from './pages/PaymentCompletion';
 import Offers from './pages/Offers';
 import Payments from './pages/Payments';
 import Withdraw from './pages/Withdraw';
