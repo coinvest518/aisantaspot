@@ -1,8 +1,8 @@
+// src/pages/PaymentCompletion.tsx
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from '../lib/useUser';
-import { AppSidebar } from '../components/AppSidebar';
 import { Button } from '@/components/ui/button';
 import { PaymentStatus } from '../components/PaymentStatus';
 import { usePaymentProcessing } from '../hooks/usePaymentProcessing';
@@ -23,7 +23,6 @@ const PaymentCompletion: React.FC = () => {
 
     return (
         <div className="flex">
-            <AppSidebar />
             <div className="flex-grow p-4">
                 <Card>
                     <CardHeader>
