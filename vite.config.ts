@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://santaspot.xyz',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       },
