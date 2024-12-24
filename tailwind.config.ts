@@ -52,11 +52,36 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Add sidebar colors
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background, 222.2 84% 4.9%))",
+          foreground: "hsl(var(--sidebar-foreground, 210 40% 98%))",
+          muted: "hsl(var(--sidebar-muted, 217.2 32.6% 17.5%))",
+          accent: "hsl(var(--sidebar-accent, 217.2 32.6% 17.5%))",
+          border: "hsl(var(--sidebar-border, 217.2 32.6% 17.5%))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      spacing: {
+        // Add sidebar width
+        sidebar: "16rem", // 256px
+        "sidebar-sm": "4rem", // 64px for collapsed state
+      },
+      width: {
+        sidebar: "var(--sidebar-width, 16rem)",
+        "sidebar-sm": "var(--sidebar-width-sm, 4rem)",
+      },
+      maxWidth: {
+        sidebar: "var(--sidebar-width, 16rem)",
+        "sidebar-sm": "var(--sidebar-width-sm, 4rem)",
+      },
+      minWidth: {
+        sidebar: "var(--sidebar-width, 16rem)",
+        "sidebar-sm": "var(--sidebar-width-sm, 4rem)",
       },
       keyframes: {
         "accordion-down": {
@@ -67,12 +92,48 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "sidebar-slide-in": {
+          from: { transform: "translateX(-100%)" },
+          to: { transform: "translateX(0)" },
+        },
+        "sidebar-slide-out": {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-100%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "sidebar-in": "sidebar-slide-in 0.2s ease-out",
+        "sidebar-out": "sidebar-slide-out 0.2s ease-out",
+      },
+      transitionProperty: {
+        width: "width",
+        spacing: "margin, padding",
+      },
+      zIndex: {
+        sidebar: "40",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    // Add custom plugin for sidebar utilities
+    function({ addUtilities }) {
+      addUtilities({
+        ".sidebar-scrollbar": {
+          "&::-webkit-scrollbar": {
+            width: "4px",
+          },
+          "&::-webkit-scrollbar-track": {
+            backgroundColor: "transparent",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "hsl(var(--sidebar-border))",
+            borderRadius: "2px",
+          },
+        },
+      });
+    },
+  ],
 } satisfies Config;

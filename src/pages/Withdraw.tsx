@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { AppSidebar } from '../components/AppSidebar';
 import ProgressBar from '../components/ProgressBar';
 import { UserContext } from '../context/UserContext';
 import useUserStats from '../hooks/useUserStats';
@@ -94,7 +93,6 @@ const Withdraw: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <AppSidebar />
       <main className="flex-1 p-6 overflow-y-auto">
         <h1 className="text-3xl font-bold mb-6">🎮 Santa’sPot: The Holiday Giving Game! 🎁✨</h1>
         <motion.div

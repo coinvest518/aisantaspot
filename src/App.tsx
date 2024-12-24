@@ -2,6 +2,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { UserProvider } from './context/UserProvider';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { Layout } from './components/Layout';
 import { Toaster } from "sonner";
 
@@ -28,73 +29,76 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <UserProvider>
-      <TooltipProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Landing />} />
-            <Route path="/r/:shortCode" element={<Redirect />} />
+      <SidebarProvider defaultOpen={true}>
+        <TooltipProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes - no layout */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/r/:shortCode" element={<Redirect />} />
 
-            {/* Protected routes with sidebar layout */}
-            <Route path="/dashboard" element={
-              <Layout>
-                <Dashboard />
-              </Layout>
-            } />
-            <Route path="/payment-completion" element={
-              <Layout>
-                <PaymentCompletion />
-              </Layout>
-            } />
-            <Route path="/referrals" element={
-              <Layout>
-                <Referrals />
-              </Layout>
-            } />
-            <Route path="/offers" element={
-              <Layout>
-                <Offers />
-              </Layout>
-            } />
-            <Route path="/payments" element={
-              <Layout>
-                <Payments />
-              </Layout>
-            } />
-            <Route path="/withdraw" element={
-              <Layout>
-                <Withdraw />
-              </Layout>
-            } />
-            <Route path="/complete-profile" element={
-              <Layout>
-                <CompleteProfile />
-              </Layout>
-            } />
+              {/* Protected routes with layout */}
+              <Route path="/dashboard" element={
+                <Layout requireAuth>
+                  <Dashboard />
+                </Layout>
+              } />
+              <Route path="/payment-completion" element={
+                <Layout requireAuth>
+                  <PaymentCompletion />
+                </Layout>
+              } />
+              <Route path="/referrals" element={
+                <Layout requireAuth>
+                  <Referrals />
+                </Layout>
+              } />
+              <Route path="/offers" element={
+                <Layout requireAuth>
+                  <Offers />
+                </Layout>
+              } />
+              <Route path="/payments" element={
+                <Layout requireAuth>
+                  <Payments />
+                </Layout>
+              } />
+              <Route path="/withdraw" element={
+                <Layout requireAuth>
+                  <Withdraw />
+                </Layout>
+              } />
+              <Route path="/complete-profile" element={
+                <Layout requireAuth>
+                  <CompleteProfile />
+                </Layout>
+              } />
 
-            {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-      <Toaster 
-        position="top-center" 
-        expand={true} 
-        richColors 
-        closeButton
-        style={{ marginTop: '20vh' }}
-        toastOptions={{
-          style: {
-            background: 'rgba(255, 255, 255, 0.9)',
-            padding: '16px',
-            borderRadius: '12px',
-            fontSize: '1.1rem',
-            maxWidth: '500px',
-            width: '90%',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          },
-        }}
-      />
+              {/* Catch all route */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+        
+        <Toaster 
+          position="top-center" 
+          expand={true} 
+          richColors 
+          closeButton
+          style={{ marginTop: '20vh' }}
+          toastOptions={{
+            style: {
+              background: 'rgba(255, 255, 255, 0.9)',
+              padding: '16px',
+              borderRadius: '12px',
+              fontSize: '1.1rem',
+              maxWidth: '500px',
+              width: '90%',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            },
+          }}
+        />
+      </SidebarProvider>
     </UserProvider>
   </QueryClientProvider>
 );

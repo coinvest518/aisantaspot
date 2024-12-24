@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { AppSidebar } from '../components/AppSidebar'
 import { StatsCards } from '../components/stats-cards'
 import { OffersFilter } from '../components/offers-filter'
 import { Clock, Coins, GamepadIcon, ClipboardList, ListTodoIcon } from 'lucide-react'
@@ -241,7 +240,6 @@ const Offers: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
-      <AppSidebar />
       <main className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-7xl mx-auto space-y-8">
           <div>

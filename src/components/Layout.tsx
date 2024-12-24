@@ -1,8 +1,10 @@
+// components/Layout.tsx
 import React from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useUser } from '@/lib/useUser';
 import { Navigate } from 'react-router-dom';
+import { useSidebar } from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +13,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, requireAuth = true }) => {
   const { user, loading } = useUser();
+  const { state } = useSidebar();
 
   if (loading) {
     return (
@@ -25,13 +28,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, requireAuth = true }) 
   }
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
+      <div className="fixed inset-y-0 left-0 z-40">
         <AppSidebar />
-        <main className="flex-1">
-          {children}
-        </main>
       </div>
-    </SidebarProvider>
+      <main 
+        className={cn(
+          "flex-1 transition-all duration-300",
+          state === "expanded" ? "ml-64" : "ml-16",
+          "p-6"
+        )}
+      >
+        {children}
+      </main>
+    </div>
   );
 };

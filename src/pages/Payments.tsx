@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { createPaymentIntent } from './api/create-payment-intent';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import { AppSidebar } from '../components/AppSidebar';
 import { useUser } from '@/lib/useUser';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -60,7 +59,6 @@ const Payments = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <AppSidebar />
       <main className="flex-1 p-6 overflow-y-auto">
         <h1 className="text-3xl font-bold mb-6">Make a Payment</h1>
         <motion.div

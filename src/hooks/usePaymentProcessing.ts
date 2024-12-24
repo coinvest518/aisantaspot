@@ -3,6 +3,23 @@ import { supabase } from '../lib/supabase';
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 
+
+
+
+
+
+// hooks/usePaymentProcessing.ts
+interface PaymentProcessingResult {
+  status: PaymentStatus;
+  error: string;
+  paymentAmount: number;
+  loading: boolean;  // Add this line
+}
+
+
+
+
+
 type PaymentStatus = 'success' | 'processing' | 'failed' | 'checking';
 type PaymentData = {
     amount: number;
@@ -16,6 +33,7 @@ export const usePaymentProcessing = (
   redirectStatus: string | null,
   userId: string | null
 ) => {
+  const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<PaymentStatus>('checking');
   const [error, setError] = useState<string | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number | null>(null);
@@ -198,5 +216,5 @@ export const usePaymentProcessing = (
     };
   }, [userId, paymentIntent, redirectStatus, hasCheckedPayment, navigate, toast]);
 
-  return { status, error, paymentAmount };
+  return { status, error, paymentAmount, loading };  // Update this line
 };

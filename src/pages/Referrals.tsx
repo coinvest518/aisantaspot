@@ -13,7 +13,6 @@ import {
   Legend,
 } from 'chart.js';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AppSidebar } from '../components/AppSidebar';
 import { Button } from "@/components/ui/button";
 import { User } from '@supabase/supabase-js';
 import { Copy, Share2, Gift, DollarSign, Users } from 'lucide-react';
@@ -156,7 +155,6 @@ const Referrals: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gradient-to-b from-red-50 to-white">
-      <AppSidebar />
       <main className="flex-1 p-6 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0 }}
