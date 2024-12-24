@@ -137,7 +137,6 @@ const Dashboard = () => {
   }
 
   return (
-    <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gray-50">
         <AppSidebar />
         <div className="flex-1">
@@ -269,7 +268,6 @@ const Dashboard = () => {
           </main>
         </div>
       </div>
-    </SidebarProvider>
   );
 };
 
