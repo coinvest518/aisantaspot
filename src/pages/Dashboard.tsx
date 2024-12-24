@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Copy, Facebook, Twitter, Instagram, MessageCircle, Users, BarChart } from "lucide-react";
+import { Copy, Facebook, Twitter, Instagram, MessageCircle, Users, BarChart, Calendar } from "lucide-react";
 import { CIcon } from '@coreui/icons-react';
 import { cibTiktok } from '@coreui/icons';
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,12 @@ const Dashboard = () => {
     created_at?: string;
   }
 
+  interface UserStats {
+    total_earned: number;
+    completed_offers: number;
+    current_streak: number;
+  }
+
   interface RealtimePayload {
     new: PotData;
     old: PotData;
@@ -27,6 +33,11 @@ const Dashboard = () => {
   const [potTotal, setPotTotal] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [userStats, setUserStats] = useState<UserStats>({
+    total_earned: 0,
+    completed_offers: 0,
+    current_streak: 0
+  });
   const [dashboardData, setDashboardData] = useState({
     earnings: 0,
     clicks: 0,
@@ -46,21 +57,21 @@ const Dashboard = () => {
           profileResult,
           clickResult,
           referralResult,
-          userStatsResult,
-          potResult
+          potResult,
+          userStatsResult
         ] = await Promise.all([
           supabase.from("profiles").select("*").eq("id", user.id).single(),
           supabase.from("clicks").select("*", { count: "exact" }).eq("user_id", user.id),
           supabase.from("referrals").select("*", { count: "exact" }).eq("referrer_id", user.id),
-          supabase.from("user_stats").select("*").eq("user_id", user.id).single(),
-          supabase.from("pot").select("*").eq("is_current", true).single<PotData>()
+          supabase.from("pot").select("*").eq("is_current", true).single<PotData>(),
+          supabase.from("user_stats").select("*").eq("user_id", user.id).single()
         ]);
 
         const { data: profile, error: profileError } = profileResult;
         const { count: clickCount } = clickResult;
         const { count: referralCount } = referralResult;
-        const { data: userStats, error: userStatsError } = userStatsResult;
         const { data: potData, error: potError } = potResult;
+        const { data: userStatsData, error: userStatsError } = userStatsResult;
 
         if (profileError || !profile) {
           navigate("/complete-profile");
@@ -71,11 +82,19 @@ const Dashboard = () => {
           setPotTotal(potData.total_amount || 0);
         }
 
+        if (!userStatsError && userStatsData) {
+          setUserStats({
+            total_earned: userStatsData.total_earned || 0,
+            completed_offers: userStatsData.completed_offers || 0,
+            current_streak: userStatsData.current_streak || 0
+          });
+        }
+
         setDashboardData({
-          earnings: userStats.total_earned || 0,
+          earnings: profile.earnings || 0,
           clicks: clickCount || 0,
           referrals: referralCount || 0,
-          completed_offers: userStats.completed_offers || 0,
+          completed_offers: profile.completed_offers || 0,
           referralLink: `ref.santaspot.xyz/${profile.referral_code}`,
           username: profile.username
         });
@@ -94,8 +113,9 @@ const Dashboard = () => {
 
     loadDashboard();
 
-    // Set up realtime subscription
+    // Set up realtime subscriptions
     const potChannel = supabase.channel('pot_changes');
+    const userStatsChannel = supabase.channel('user_stats_changes');
     
     potChannel
       .on(
@@ -115,8 +135,29 @@ const Dashboard = () => {
       )
       .subscribe();
 
+    userStatsChannel
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_stats',
+          filter: `user_id=eq.${user?.id}`
+        },
+        (payload: any) => {
+          const newStats = payload.new;
+          setUserStats({
+            total_earned: newStats.total_earned || 0,
+            completed_offers: newStats.completed_offers || 0,
+            current_streak: newStats.current_streak || 0
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
       potChannel.unsubscribe();
+      userStatsChannel.unsubscribe();
     };
   }, [user, navigate, toast]);
 
@@ -161,6 +202,31 @@ const Dashboard = () => {
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Total Earnings</h2>
               <span className="text-3xl font-bold">${dashboardData.earnings.toFixed(2)}</span>
+            </div>
+          </Card>
+
+          {/* User Stats Card */}
+          <Card className="p-6 bg-white shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">Your Stats</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <p className="text-sm text-gray-500">Total Earned</p>
+                <p className="text-2xl font-bold text-primary">
+                  ${userStats.total_earned.toFixed(2)}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-gray-500">Completed Offers</p>
+                <p className="text-2xl font-bold text-primary">
+                  {userStats.completed_offers}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-gray-500">Current Streak</p>
+                <p className="text-2xl font-bold text-primary">
+                  {userStats.current_streak} days
+                </p>
+              </div>
             </div>
           </Card>
 
