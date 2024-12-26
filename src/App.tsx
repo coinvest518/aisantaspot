@@ -16,6 +16,7 @@ import Payments from './pages/Payments';
 import Withdraw from './pages/Withdraw';
 import { Redirect } from './pages/Redirect';
 import CompleteProfile from "./pages/CompleteProfile";
+import { Analytics } from "@vercel/analytics/react"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,6 +99,8 @@ const App = () => (
             },
           }}
         />
+              <Analytics />
+
       </SidebarProvider>
     </UserProvider>
   </QueryClientProvider>
