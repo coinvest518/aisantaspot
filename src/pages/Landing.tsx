@@ -10,6 +10,8 @@ import AuthForm from "@/components/authForm";
 import { toast } from "sonner";
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
+import DrawTimer from "@/components/DrawTimer";
+
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
@@ -42,7 +44,7 @@ const processReferralReward = async (referralCode: string, newUserId: string) =>
       // Update referrer's earnings
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           earnings: (referrer.earnings || 0) + 50,
           updated_at: new Date().toISOString()
         })
@@ -212,6 +214,9 @@ const Landing = () => {
               successful new signup. $200 for new users. Start earning passive income today!
             </p>
             <LiveCounter />
+            <div className="mt-6">
+              <DrawTimer />
+            </div>
             <div className="grid md:grid-cols-3 gap-6 mt-12">
               <Card className="bg-white/80 backdrop-blur">
                 <CardContent className="pt-6">
@@ -242,9 +247,9 @@ const Landing = () => {
               email={email}
               setEmail={setEmail}
               password={password}
-         
+
               setPassword={setPassword}
-           
+
               onSubmit={handleSubmit}
             />
           </Card>
