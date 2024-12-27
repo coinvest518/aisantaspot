@@ -1,122 +1,149 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Copy, Facebook, Twitter, Instagram, MessageCircle, Users, BarChart, Calendar } from "lucide-react";
+import { Copy, Facebook, Twitter, Instagram, MessageCircle, Users, BarChart, DollarSign } from "lucide-react";
 import { CIcon } from '@coreui/icons-react';
 import { cibTiktok } from '@coreui/icons';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useUser } from '../lib/useUser';
 import { useNavigate } from "react-router-dom";
+import { generateReferralLink, trackReferralClick } from '../../utils/referral';
+
+interface PotData {
+  id: number;
+  total_amount: number;
+  is_current: boolean;
+  created_at?: string;
+}
+
+interface UserStats {
+  total_earned: number;
+  completed_offers: number;
+  current_streak: number;
+}
+
+interface DashboardData {
+  earnings: number;
+  referral_clicks: number;
+  referrals: number;
+  completed_offers: number;
+  referralLink: string;
+  username: string;
+  referral_code: string;
+}
+
+interface Donation {
+  id: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  network: string;
+  created_at: string;
+}
 
 const Dashboard = () => {
-  interface PotData {
-    id: number;
-    total_amount: number;
-    is_current: boolean;
-    created_at?: string;
-  }
-
-  interface UserStats {
-    total_earned: number;
-    completed_offers: number;
-    current_streak: number;
-  }
-
-  interface RealtimePayload {
-    new: PotData;
-    old: PotData;
-    eventType: 'INSERT' | 'UPDATE' | 'DELETE';
-  }
-
+  const { toast } = useToast();
   const { user } = useUser();
   const [potTotal, setPotTotal] = useState(0);
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [showDonations, setShowDonations] = useState(false);
   const [userStats, setUserStats] = useState<UserStats>({
     total_earned: 0,
     completed_offers: 0,
     current_streak: 0
   });
-  const [dashboardData, setDashboardData] = useState({
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
     earnings: 0,
-    clicks: 0,
+    referral_clicks: 0,
     referrals: 0,
     completed_offers: 0,
     referralLink: "",
-    username: ""
+    username: "",
+    referral_code: ""
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadDashboard = async () => {
-      if (!user) return;
+  const loadDashboard = async () => {
+    if (!user) return;
 
-      try {
-        const [
-          profileResult,
-          clickResult,
-          referralResult,
-          potResult,
-          userStatsResult
-        ] = await Promise.all([
-          supabase.from("profiles").select("*").eq("id", user.id).single(),
-          supabase.from("clicks").select("*", { count: "exact" }).eq("user_id", user.id),
-          supabase.from("referrals").select("*", { count: "exact" }).eq("referrer_id", user.id),
-          supabase.from("pot").select("*").eq("is_current", true).single<PotData>(),
-          supabase.from("user_stats").select("*").eq("user_id", user.id).single()
-        ]);
+    try {
+      const [
+        profileResult,
+        clickResult,
+        referralResult,
+        potResult,
+        userStatsResult,
+        donationsResult
+      ] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).single(),
+        supabase.from("referral_clicks").select("*", { count: "exact" }).eq("user_id", user.id),
+        supabase.from("referrals").select("*", { count: "exact" }).eq("referrer_id", user.id),
+        supabase.from("pot").select("*").eq("is_current", true).single<PotData>(),
+        supabase.from("user_stats").select("*").eq("user_id", user.id).single(),
+        supabase.from("donations").select("*").eq("user_id", user.id)
+      ]);
 
-        const { data: profile, error: profileError } = profileResult;
-        const { count: clickCount } = clickResult;
-        const { count: referralCount } = referralResult;
-        const { data: potData, error: potError } = potResult;
-        const { data: userStatsData, error: userStatsError } = userStatsResult;
+      const { data: profile, error: profileError } = profileResult;
+      const { count: clickCount } = clickResult;
+      const { count: referralCount } = referralResult;
+      const { data: potData } = potResult;
+      const { data: userStatsData } = userStatsResult;
+      const { data: donationsData } = donationsResult;
 
-        if (profileError || !profile) {
-          navigate("/complete-profile");
-          return;
-        }
-
-        if (!potError && potData) {
-          setPotTotal(potData.total_amount || 0);
-        }
-
-        if (!userStatsError && userStatsData) {
-          setUserStats({
-            total_earned: userStatsData.total_earned || 0,
-            completed_offers: userStatsData.completed_offers || 0,
-            current_streak: userStatsData.current_streak || 0
-          });
-        }
-
-        setDashboardData({
-          earnings: profile.earnings || 0,
-          clicks: clickCount || 0,
-          referrals: referralCount || 0,
-          completed_offers: profile.completed_offers || 0,
-          referralLink: `ref.santaspot.xyz/${profile.referral_code}`,
-          username: profile.username
-        });
-
-      } catch (error) {
-        console.error("Error loading dashboard:", error);
-        toast({
-          title: "Error loading dashboard",
-          description: "Please try again later",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
+      if (profileError || !profile) {
+        navigate("/complete-profile");
+        return;
       }
-    };
 
+      if (potData) {
+        setPotTotal(potData.total_amount || 0);
+      }
+
+      if (userStatsData) {
+        setUserStats({
+          total_earned: userStatsData.total_earned || 0,
+          completed_offers: userStatsData.completed_offers || 0,
+          current_streak: userStatsData.current_streak || 0
+        });
+      }
+
+      const referralLink = generateReferralLink(profile.referral_code);
+
+      setDashboardData({
+        earnings: profile.earnings || 0,
+        referral_clicks: clickCount || 0,
+        referrals: referralCount || 0,
+        completed_offers: profile.completed_offers || 0,
+        referralLink,
+        username: profile.username,
+        referral_code: profile.referral_code
+      });
+
+      if (donationsData) {
+        setDonations(donationsData);
+      }
+
+    } catch (error) {
+      console.error("Error loading dashboard:", error);
+      toast({
+        title: "Error loading dashboard",
+        description: "Please try again later",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadDashboard();
 
-    // Set up realtime subscriptions
     const potChannel = supabase.channel('pot_changes');
     const userStatsChannel = supabase.channel('user_stats_changes');
-    
+    const clicksChannel = supabase.channel('clicks_changes');
+
     potChannel
       .on(
         'postgres_changes',
@@ -126,10 +153,9 @@ const Dashboard = () => {
           table: 'pot',
           filter: 'is_current=eq.true'
         },
-        (payload) => {
-          const typedPayload = payload as unknown as RealtimePayload;
-          if (typedPayload.new && typeof typedPayload.new.total_amount === 'number') {
-            setPotTotal(typedPayload.new.total_amount);
+        (payload: any) => {
+          if (payload.new && typeof payload.new.total_amount === 'number') {
+            setPotTotal(payload.new.total_amount);
           }
         }
       )
@@ -155,20 +181,79 @@ const Dashboard = () => {
       )
       .subscribe();
 
+    clicksChannel
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'clicks',
+          filter: `user_id=eq.${user?.id}`
+        },
+        () => {
+          loadDashboard();
+        }
+      )
+      .subscribe();
+
     return () => {
       potChannel.unsubscribe();
       userStatsChannel.unsubscribe();
+      clicksChannel.unsubscribe();
     };
   }, [user, navigate, toast]);
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(dashboardData.referralLink);
-    toast({
-      title: "Link copied!",
-      description: "Your referral link has been copied to clipboard.",
-    });
+  const copyReferralCode = async () => {
+    try {
+      await navigator.clipboard.writeText(dashboardData.referral_code);
+
+      toast({
+        title: "Code Copied! 📋",
+        description: `Your referral code "${dashboardData.referral_code}" has been copied to clipboard.`,
+        variant: "default",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error copying referral code:', error);
+      toast({
+        title: "Copy Failed",
+        description: "Could not copy referral code. Please try again.",
+        variant: "destructive",
+        duration: 4000,
+      });
+    }
   };
-  
+
+  const copyLink = async () => {
+    try {
+      const referralLink = generateReferralLink(dashboardData.referral_code);
+      await navigator.clipboard.writeText(referralLink);
+
+      toast({
+        title: "Success!",
+        description: "Link copied to clipboard",
+        duration: 3000,
+      });
+
+      if (user?.id) {
+        await trackReferralClick(user.id, dashboardData.referral_code);
+      }
+
+      loadDashboard();
+    } catch (error) {
+      console.error('Error copying link:', error);
+      toast({
+        title: "Error",
+        description: "Failed to copy link",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShowDonations = () => {
+    setShowDonations(!showDonations);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -193,11 +278,11 @@ const Dashboard = () => {
           {dashboardData.username ? `Welcome, ${dashboardData.username}!` : "Welcome!"}
         </Button>
       </header>
-          
+
       <main className="p-6">
         <div className="max-w-7xl mx-auto space-y-8">
           <h1 className="text-3xl font-bold">Dashboard</h1>
-            
+
           <Card className="bg-primary text-white p-6 mb-8">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Total Earnings</h2>
@@ -247,7 +332,7 @@ const Dashboard = () => {
 
           <div className="text-center">
             <p className="text-lg text-gray-600">
-              You have {dashboardData.clicks} Click{dashboardData.clicks !== 1 ? "s" : ""}
+              You have {dashboardData.referral_clicks} Click{dashboardData.referral_clicks !== 1 ? "s" : ""}
             </p>
           </div>
 
@@ -265,9 +350,42 @@ const Dashboard = () => {
                 <BarChart className="w-6 h-6 text-primary mr-2" />
                 <h3 className="text-lg font-semibold">Offers</h3>
               </div>
-              <p className="text-3xl font-bold">{dashboardData.completed_offers}</p>
+              <p className="text-3xl font-bold">{userStats.completed_offers}</p>
             </Card>
           </div>
+
+          {/* Crypto Donations Button */}
+          <Card className="p-6">
+            <Button onClick={handleShowDonations} variant="outline">
+              <DollarSign className="w-4 h-4 mr-2" />
+              Crypto Donations
+            </Button>
+            {showDonations && (
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold mb-4">Your Crypto Donations</h3>
+                <table className="min-w-full bg-white">
+                  <thead>
+                    <tr>
+                      <th className="py-2 px-4 border-b">Amount</th>
+                      <th className="py-2 px-4 border-b">Currency</th>
+                      <th className="py-2 px-4 border-b">Network</th>
+                      <th className="py-2 px-4 border-b">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {donations.map((donation) => (
+                      <tr key={donation.id}>
+                        <td className="py-2 px-4 border-b">{donation.amount}</td>
+                        <td className="py-2 px-4 border-b">{donation.currency}</td>
+                        <td className="py-2 px-4 border-b">{donation.network}</td>
+                        <td className="py-2 px-4 border-b">{new Date(donation.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
 
           {/* Referral Link Card */}
           <Card className="p-6">
@@ -283,7 +401,11 @@ const Dashboard = () => {
               />
               <Button onClick={copyLink}>
                 <Copy className="w-4 h-4 mr-2" />
-                Copy
+                Copy Link
+              </Button>
+              <Button onClick={copyReferralCode} variant="outline">
+                <Copy className="w-4 h-4 mr-2" />
+                Copy Code
               </Button>
             </div>
           </Card>

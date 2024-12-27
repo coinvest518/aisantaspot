@@ -55,6 +55,25 @@ export const processReferralReward = async (
     return false;
   }
 };
+// Add click tracking function
+export const trackReferralClick = async (userId: string, referralCode: string) => {
+  const { data, error } = await supabase
+    .from('referral_clicks')
+    .insert([
+      {
+        user_id: userId,
+        referral_code: referralCode,
+        clicked_at: new Date().toISOString()
+      }
+    ]);
+  
+  if (error) {
+    console.error('Error tracking click:', error);
+    throw error;
+  }
+  return data;
+};
+
 export const createReferralEntry = async (
   referrerId: string | null,
   referredId: string,

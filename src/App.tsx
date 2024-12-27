@@ -17,6 +17,7 @@ import Withdraw from './pages/Withdraw';
 import { Redirect } from './pages/Redirect';
 import CompleteProfile from "./pages/CompleteProfile";
 import { Analytics } from "@vercel/analytics/react"
+import CryptoPaymentPage from './pages/CryptoPayment';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,66 +45,72 @@ const App = () => (
                   <Dashboard />
                 </Layout>
               } />
-              <Route path="/payment-completion" element={
+              <Route path="/crypto-payment" element={
                 <Layout requireAuth>
-                  <PaymentCompletion />
-                </Layout>
-              } />
-              <Route path="/referrals" element={
-                <Layout requireAuth>
-                  <Referrals />
-                </Layout>
-              } />
-              <Route path="/offers" element={
-                <Layout requireAuth>
-                  <Offers />
-                </Layout>
-              } />
-              <Route path="/payments" element={
-                <Layout requireAuth>
-                  <Payments />
-                </Layout>
-              } />
-              <Route path="/withdraw" element={
-                <Layout requireAuth>
-                  <Withdraw />
-                </Layout>
-              } />
-              <Route path="/complete-profile" element={
-                <Layout requireAuth>
-                  <CompleteProfile />
-                </Layout>
-              } />
+                  <CryptoPaymentPage />
+                </Layout> 
+                }/>
 
-              {/* Catch all route */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-        
-        <Toaster 
-          position="top-center" 
-          expand={true} 
-          richColors 
-          closeButton
-          style={{ marginTop: '20vh' }}
-          toastOptions={{
-            style: {
-              background: 'rgba(255, 255, 255, 0.9)',
-              padding: '16px',
-              borderRadius: '12px',
-              fontSize: '1.1rem',
-              maxWidth: '500px',
-              width: '90%',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            },
-          }}
-        />
-              <Analytics />
+            <Route path="/payment-completion" element={
+              <Layout requireAuth>
+                <PaymentCompletion />
+              </Layout>
+            } />
+            <Route path="/referrals" element={
+              <Layout requireAuth>
+                <Referrals />
+              </Layout>
+            } />
+            <Route path="/offers" element={
+              <Layout requireAuth>
+                <Offers />
+              </Layout>
+            } />
+            <Route path="/payments" element={
+              <Layout requireAuth>
+                <Payments />
+              </Layout>
+            } />
+            <Route path="/withdraw" element={
+              <Layout requireAuth>
+                <Withdraw />
+              </Layout>
+            } />
+            <Route path="/complete-profile" element={
+              <Layout requireAuth>
+                <CompleteProfile />
+              </Layout>
+            } />
 
-      </SidebarProvider>
-    </UserProvider>
-  </QueryClientProvider>
+            {/* Catch all route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+
+      <Toaster
+        position="top-center"
+        expand={true}
+        richColors
+        closeButton
+        style={{ marginTop: '20vh' }}
+        toastOptions={{
+          style: {
+            background: 'rgba(255, 255, 255, 0.9)',
+            padding: '16px',
+            borderRadius: '12px',
+            fontSize: '1.1rem',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          },
+        }}
+      />
+      <Analytics />
+
+    </SidebarProvider>
+  </UserProvider>
+  </QueryClientProvider >
 );
 
 export default App;

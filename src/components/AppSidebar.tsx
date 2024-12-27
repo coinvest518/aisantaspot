@@ -35,6 +35,13 @@ const accountItems = [
     to: "/payments",
     icon: Receipt,
   },
+
+  {
+    title: "Crypto",
+    to: "/crypto-payment",
+    icon: CreditCard,
+
+  },
   {
     title: "Withdraw",
     to: "/withdraw",
